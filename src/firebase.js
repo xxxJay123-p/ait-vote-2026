@@ -4,16 +4,23 @@ import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
+// Loaded from environment variables (.env file)
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyCypsXRAMzZ1GJRrv6fH_uz6AVt9I4iH04",
-    authDomain: "votetest-e53fb.firebaseapp.com",
-    projectId: "votetest-e53fb",
-    storageBucket: "votetest-e53fb.firebasestorage.app",
-    messagingSenderId: "613136322508",
-    appId: "1:613136322508:web:0f18175b0255a384de5769",
-    measurementId: "G-PKR42CZE9H"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
   };
+
+// Validate that all required environment variables are set
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('❌ Firebase configuration is missing! Please check your .env file.');
+  throw new Error('Firebase configuration is incomplete. Please set all VITE_FIREBASE_* environment variables.');
+}
   
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

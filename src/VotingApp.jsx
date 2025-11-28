@@ -526,8 +526,8 @@ const VotingApp = () => {
 
   // Admin login
   const handleAdminLogin = () => {
-    // Simple password check (you can change this password)
-    const ADMIN_PASSWORD = 'admin2026';
+    // Admin password loaded from environment variables
+    const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ;
     if (adminPassword === ADMIN_PASSWORD) {
       setIsAdmin(true);
       setShowAdminLogin(false);

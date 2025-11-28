@@ -50,21 +50,30 @@ A beautiful, cinematic voting application with Hong Kong-inspired neon aesthetic
    npm install
    ```
 
-3. **Configure Firebase**
+3. **Configure Environment Variables**
    
-   Open `src/firebase.js` and update with your Firebase configuration:
+   Copy the example environment file and fill in your Firebase credentials:
    
-   ```javascript
-   const firebaseConfig = {
-     apiKey: "YOUR_API_KEY",
-     authDomain: "your-project.firebaseapp.com",
-     projectId: "your-project-id",
-     storageBucket: "your-project.appspot.com",
-     messagingSenderId: "YOUR_SENDER_ID",
-     appId: "YOUR_APP_ID",
-     measurementId: "YOUR_MEASUREMENT_ID"
-   };
+   ```bash
+   cp .env.example .env
    ```
+   
+   Open `.env` and update with your Firebase configuration:
+   
+   ```env
+   VITE_FIREBASE_API_KEY=your-api-key-here
+   VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your-project-id
+   VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+   VITE_FIREBASE_APP_ID=your-app-id
+   VITE_FIREBASE_MEASUREMENT_ID=your-measurement-id
+   VITE_ADMIN_PASSWORD=admin2026
+   ```
+   
+   **Get these values from**: Firebase Console > Project Settings > General > Your apps
+   
+   ⚠️ **Important**: Never commit the `.env` file to version control. It's already in `.gitignore`.
 
 4. **Set Up Firestore Security Rules**
    
@@ -187,11 +196,13 @@ Edit the CSS variables in `VotingApp.jsx`:
 
 ### Admin Password
 
-Change the admin password in `VotingApp.jsx`:
+Change the admin password in `.env` file:
 
-```javascript
-const ADMIN_PASSWORD = 'your-new-password';
+```env
+VITE_ADMIN_PASSWORD=your-new-password
 ```
+
+After changing, restart the development server for changes to take effect.
 
 ## 📱 Responsive Breakpoints
 
@@ -245,11 +256,25 @@ const ADMIN_PASSWORD = 'your-new-password';
 
 ⚠️ **Important for Production**:
 
-1. **Firebase Security Rules**: Implement proper authentication-based rules
-2. **Admin Password**: Change default password and consider implementing proper auth
-3. **API Keys**: Never commit sensitive keys to version control
-4. **Rate Limiting**: Consider implementing vote rate limiting
-5. **Input Validation**: Add server-side validation for candidate names
+1. **Environment Variables**: 
+   - Never commit `.env` file to version control (already in `.gitignore`)
+   - Use different `.env` files for development and production
+   - Set environment variables in your hosting platform (Vercel, Netlify, etc.)
+
+2. **Firebase Security Rules**: Implement proper authentication-based rules
+
+3. **Admin Password**: 
+   - Change default password in `.env` file
+   - Consider implementing proper authentication system
+   - Use strong passwords for production
+
+4. **API Keys**: 
+   - All sensitive keys are now in `.env` file
+   - Never expose Firebase keys in client-side code comments
+
+5. **Rate Limiting**: Consider implementing vote rate limiting
+
+6. **Input Validation**: Add server-side validation for candidate names
 
 ## 📝 License
 
