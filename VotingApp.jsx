@@ -166,60 +166,12 @@ const styles = `
     100% { opacity: 1; transform: translateY(0); }
   }
   
-  @keyframes podium-glow {
-    0%, 100% { 
-      box-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor;
-    }
-    50% { 
-      box-shadow: 0 0 30px currentColor, 0 0 60px currentColor, 0 0 90px currentColor;
-    }
-  }
-  
-  @keyframes podium-bounce {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-8px); }
-  }
-  
-  @keyframes trophy-spin {
-    0% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.1); }
-    100% { transform: rotate(360deg) scale(1); }
-  }
-  
-  @keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
-  }
-  
   .animate-float {
     animation: float 4s ease-in-out infinite;
   }
   
   .animate-fade-in {
     animation: fade-in 0.3s ease-out;
-  }
-  
-  .animate-podium-glow {
-    animation: podium-glow 2s ease-in-out infinite;
-  }
-  
-  .animate-podium-bounce {
-    animation: podium-bounce 2s ease-in-out infinite;
-  }
-  
-  .animate-trophy-spin {
-    animation: trophy-spin 3s ease-in-out infinite;
-  }
-  
-  .podium-shimmer {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.1),
-      transparent
-    );
-    background-size: 200% 100%;
-    animation: shimmer 3s infinite;
   }
 
   .btn-press {
@@ -1072,180 +1024,61 @@ const VotingApp = () => {
                  <Trophy className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
                </h3>
 
-               {getFilteredCandidates().length === 0 ? (
-                 <div className="text-center text-gray-500 py-8 sm:py-10 text-sm sm:text-base">Waiting for data stream...</div>
-               ) : (
-                 <>
-                   {/* Podium for Top 3 */}
-                   {getFilteredCandidates().length >= 3 && (
-                     <div className="mb-8 sm:mb-12">
-                       <div className="text-center text-yellow-400 font-bold text-lg sm:text-xl mb-4 sm:mb-6 uppercase tracking-widest">
-                         Top 3 Winners
+               <div className="space-y-4 sm:space-y-6">
+                 {getFilteredCandidates().length === 0 ? (
+                    <div className="text-center text-gray-500 py-8 sm:py-10 text-sm sm:text-base">Waiting for data stream...</div>
+                 ) : (
+                   getFilteredCandidates().map((candidate, index) => {
+                     const voteCount = votes[candidate.id] || 0;
+                     const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
+                     const maxVote = Math.max(...getFilteredCandidates().map(c => votes[c.id] || 0));
+                     const barWidth = maxVote > 0 ? (voteCount / maxVote) * 100 : 0;
+
+                     return (
+                       <div key={candidate.id} className="relative">
+                         {/* Rank Number */}
+                         <div className="absolute -left-3 sm:-left-4 -top-2 sm:-top-3 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center font-black text-lg sm:text-xl italic z-20"
+                              style={{ 
+                                color: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : '#555',
+                                textShadow: index < 3 ? '0 0 10px rgba(255,255,255,0.5)' : 'none'
+                              }}>
+                           {index + 1}
+                         </div>
+
+                         <div className={`
+                            relative p-3 sm:p-4 pl-6 sm:pl-8 rounded border-r-4 transition-all duration-500
+                            ${index === 0 ? 'bg-gradient-to-r from-yellow-900/40 to-black border-yellow-500' : 
+                              index === 1 ? 'bg-gradient-to-r from-gray-800/40 to-black border-gray-400' :
+                              index === 2 ? 'bg-gradient-to-r from-orange-900/40 to-black border-orange-600' :
+                              'bg-black/40 border-gray-800'
+                            }
+                         `}>
+                            <div className="flex justify-between items-end mb-2 relative z-10 gap-2">
+                              <span className={`text-lg sm:text-xl font-bold tracking-wider break-words flex-1 ${index === 0 ? 'text-yellow-100' : 'text-gray-300'}`}>
+                                {candidate.name}
+                              </span>
+                              <span className="font-mono text-xl sm:text-2xl font-bold neon-text-pink flex-shrink-0">
+                                {voteCount}
+                              </span>
+                            </div>
+
+                            {/* Progress Bar Container */}
+                            <div className="h-1.5 sm:h-2 w-full bg-gray-900 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full shadow-[0_0_10px_currentColor] transition-all duration-1000 ease-out`}
+                                  style={{ 
+                                    width: `${barWidth}%`,
+                                    backgroundColor: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : '#FF1D78',
+                                    color: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : '#FF1D78'
+                                  }}
+                                />
+                            </div>
+                         </div>
                        </div>
-                       <div className="flex items-end justify-center gap-2 sm:gap-4 md:gap-6 relative">
-                         {/* 2nd Place (Left) */}
-                         {(() => {
-                           const second = getFilteredCandidates()[1];
-                           const voteCount = votes[second?.id] || 0;
-                           return second ? (
-                             <div className="flex-1 max-w-[140px] sm:max-w-[180px] animate-podium-bounce" style={{ animationDelay: '0.3s' }}>
-                               <div className="relative glass-panel rounded-t-xl border-2 border-gray-400 pb-3 sm:pb-4 pt-2 sm:pt-3 mb-2 animate-podium-glow" style={{ color: '#C0C0C0', minHeight: '100px' }}>
-                                 <div className="absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2">
-                                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-400 rounded-full flex items-center justify-center font-black text-white text-lg sm:text-xl shadow-[0_0_20px_rgba(192,192,192,0.6)]">
-                                     2
-                                   </div>
-                                 </div>
-                                 <div className="text-center mt-4 sm:mt-6">
-                                   <Trophy className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-gray-300" />
-                                   <div className="text-white font-bold text-sm sm:text-base mb-1 break-words px-1">{second.name}</div>
-                                   <div className="text-gray-300 font-mono text-lg sm:text-xl font-black">{voteCount}</div>
-                                 </div>
-                                 <div className="podium-shimmer absolute inset-0 rounded-t-xl pointer-events-none"></div>
-                               </div>
-                               <div className="h-16 sm:h-20 bg-gradient-to-t from-gray-700 to-gray-500 rounded-b-lg border-2 border-t-0 border-gray-400 shadow-[0_0_15px_rgba(192,192,192,0.4)]"></div>
-                             </div>
-                           ) : null;
-                         })()}
-
-                         {/* 1st Place (Center - Tallest) */}
-                         {(() => {
-                           const first = getFilteredCandidates()[0];
-                           const voteCount = votes[first?.id] || 0;
-                           return first ? (
-                             <div className="flex-1 max-w-[160px] sm:max-w-[200px] animate-podium-bounce">
-                               <div className="relative glass-panel rounded-t-xl border-2 border-yellow-500 pb-4 sm:pb-5 pt-3 sm:pt-4 mb-2 animate-podium-glow" style={{ color: '#FFD700', minHeight: '130px' }}>
-                                 <div className="absolute -top-8 sm:-top-10 left-1/2 -translate-x-1/2">
-                                   <div className="w-12 h-12 sm:w-14 sm:h-14 bg-yellow-500 rounded-full flex items-center justify-center font-black text-white text-xl sm:text-2xl shadow-[0_0_30px_rgba(255,215,0,0.8)] animate-trophy-spin">
-                                     <Trophy className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                                   </div>
-                                 </div>
-                                 <div className="text-center mt-6 sm:mt-8">
-                                   <div className="text-yellow-100 font-bold text-base sm:text-lg mb-2 break-words px-1">{first.name}</div>
-                                   <div className="text-yellow-300 font-mono text-xl sm:text-2xl font-black">{voteCount}</div>
-                                 </div>
-                                 <div className="podium-shimmer absolute inset-0 rounded-t-xl pointer-events-none"></div>
-                               </div>
-                               <div className="h-24 sm:h-28 bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-b-lg border-2 border-t-0 border-yellow-500 shadow-[0_0_25px_rgba(255,215,0,0.6)]"></div>
-                             </div>
-                           ) : null;
-                         })()}
-
-                         {/* 3rd Place (Right) */}
-                         {(() => {
-                           const third = getFilteredCandidates()[2];
-                           const voteCount = votes[third?.id] || 0;
-                           return third ? (
-                             <div className="flex-1 max-w-[140px] sm:max-w-[180px] animate-podium-bounce" style={{ animationDelay: '0.6s' }}>
-                               <div className="relative glass-panel rounded-t-xl border-2 border-orange-600 pb-3 sm:pb-4 pt-2 sm:pt-3 mb-2 animate-podium-glow" style={{ color: '#CD7F32', minHeight: '90px' }}>
-                                 <div className="absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2">
-                                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-600 rounded-full flex items-center justify-center font-black text-white text-lg sm:text-xl shadow-[0_0_20px_rgba(205,127,50,0.6)]">
-                                     3
-                                   </div>
-                                 </div>
-                                 <div className="text-center mt-4 sm:mt-6">
-                                   <Trophy className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-orange-300" />
-                                   <div className="text-white font-bold text-sm sm:text-base mb-1 break-words px-1">{third.name}</div>
-                                   <div className="text-orange-300 font-mono text-lg sm:text-xl font-black">{voteCount}</div>
-                                 </div>
-                                 <div className="podium-shimmer absolute inset-0 rounded-t-xl pointer-events-none"></div>
-                               </div>
-                               <div className="h-12 sm:h-16 bg-gradient-to-t from-orange-700 to-orange-500 rounded-b-lg border-2 border-t-0 border-orange-600 shadow-[0_0_15px_rgba(205,127,50,0.4)]"></div>
-                             </div>
-                           ) : null;
-                         })()}
-                       </div>
-                     </div>
-                   )}
-
-                   {/* Normal List for 4th place and below */}
-                   {getFilteredCandidates().length > 3 && (
-                     <div className="mt-8 sm:mt-12">
-                       <div className="text-center text-gray-400 font-bold text-base sm:text-lg mb-4 sm:mb-6 uppercase tracking-widest">
-                         Other Rankings
-                       </div>
-                       <div className="space-y-4 sm:space-y-6">
-                         {getFilteredCandidates().slice(3).map((candidate, index) => {
-                           const actualIndex = index + 3;
-                           const voteCount = votes[candidate.id] || 0;
-                           const maxVote = Math.max(...getFilteredCandidates().map(c => votes[c.id] || 0));
-                           const barWidth = maxVote > 0 ? (voteCount / maxVote) * 100 : 0;
-
-                           return (
-                             <div key={candidate.id} className="relative">
-                               {/* Rank Number */}
-                               <div className="absolute -left-3 sm:-left-4 -top-2 sm:-top-3 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center font-black text-lg sm:text-xl italic z-20 text-gray-500">
-                                 {actualIndex + 1}
-                               </div>
-
-                               <div className="relative p-3 sm:p-4 pl-6 sm:pl-8 rounded border-r-4 transition-all duration-500 bg-black/40 border-gray-800">
-                                 <div className="flex justify-between items-end mb-2 relative z-10 gap-2">
-                                   <span className="text-lg sm:text-xl font-bold tracking-wider break-words flex-1 text-gray-300">
-                                     {candidate.name}
-                                   </span>
-                                   <span className="font-mono text-xl sm:text-2xl font-bold neon-text-pink flex-shrink-0">
-                                     {voteCount}
-                                   </span>
-                                 </div>
-
-                                 {/* Progress Bar Container */}
-                                 <div className="h-1.5 sm:h-2 w-full bg-gray-900 rounded-full overflow-hidden">
-                                   <div 
-                                     className="h-full rounded-full shadow-[0_0_10px_currentColor] transition-all duration-1000 ease-out"
-                                     style={{ 
-                                       width: `${barWidth}%`,
-                                       backgroundColor: '#FF1D78',
-                                       color: '#FF1D78'
-                                     }}
-                                   />
-                                 </div>
-                               </div>
-                             </div>
-                           );
-                         })}
-                       </div>
-                     </div>
-                   )}
-
-                   {/* Show normal list if less than 3 candidates */}
-                   {getFilteredCandidates().length < 3 && (
-                     <div className="space-y-4 sm:space-y-6">
-                       {getFilteredCandidates().map((candidate, index) => {
-                         const voteCount = votes[candidate.id] || 0;
-                         const maxVote = Math.max(...getFilteredCandidates().map(c => votes[c.id] || 0));
-                         const barWidth = maxVote > 0 ? (voteCount / maxVote) * 100 : 0;
-
-                         return (
-                           <div key={candidate.id} className="relative">
-                             <div className="absolute -left-3 sm:-left-4 -top-2 sm:-top-3 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center font-black text-lg sm:text-xl italic z-20 text-gray-500">
-                               {index + 1}
-                             </div>
-                             <div className="relative p-3 sm:p-4 pl-6 sm:pl-8 rounded border-r-4 transition-all duration-500 bg-black/40 border-gray-800">
-                               <div className="flex justify-between items-end mb-2 relative z-10 gap-2">
-                                 <span className="text-lg sm:text-xl font-bold tracking-wider break-words flex-1 text-gray-300">
-                                   {candidate.name}
-                                 </span>
-                                 <span className="font-mono text-xl sm:text-2xl font-bold neon-text-pink flex-shrink-0">
-                                   {voteCount}
-                                 </span>
-                               </div>
-                               <div className="h-1.5 sm:h-2 w-full bg-gray-900 rounded-full overflow-hidden">
-                                 <div 
-                                   className="h-full rounded-full shadow-[0_0_10px_currentColor] transition-all duration-1000 ease-out"
-                                   style={{ 
-                                     width: `${barWidth}%`,
-                                     backgroundColor: '#FF1D78',
-                                     color: '#FF1D78'
-                                   }}
-                                 />
-                               </div>
-                             </div>
-                           </div>
-                         );
-                       })}
-                     </div>
-                   )}
-                 </>
-               )}
+                     );
+                   })
+                 )}
+               </div>
 
                {/* Footer Stats */}
                <div className="mt-8 sm:mt-12 pt-4 sm:pt-6 border-t border-gray-800 flex flex-col sm:flex-row justify-between gap-2 text-[10px] sm:text-xs font-mono text-gray-500 uppercase tracking-widest">
