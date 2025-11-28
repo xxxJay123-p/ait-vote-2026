@@ -1,153 +1,267 @@
-# Annual Gala Night - Best Costume Award Voting App
+# AIT Annual Dinner 2026 - Best Costume Award Voting App
 
-A beautiful, cinematic voting application with neon aesthetics and SQLite backend.
+A beautiful, cinematic voting application with Hong Kong-inspired neon aesthetics, real-time Firebase integration, and responsive design for mobile and desktop devices.
 
-**注意**: 此專案已改用 SQLite 後端，不再使用 Firebase。請參考 `README_SQLITE.md` 了解如何運行。
+![Voting App](https://img.shields.io/badge/React-18.2.0-blue) ![Firebase](https://img.shields.io/badge/Firebase-12.6.0-orange) ![Vite](https://img.shields.io/badge/Vite-5.0.8-purple)
 
-## Features
+## ✨ Features
 
-- 🎨 Cinematic Hong Kong-inspired design with neon effects
-- 🔥 Real-time voting with Firebase Firestore
-- 📱 Responsive design for mobile and desktop
-- 🎭 Gender-based categories (Gentlemen/Ladies)
-- 📊 Live leaderboard with rankings
-- 📱 QR code sharing
-- ✨ Glassmorphism UI with film grain effects
+### Core Functionality
+- 🎨 **Cinematic Design** - Hong Kong-inspired neon aesthetic with glassmorphism UI
+- 🔥 **Real-time Voting** - Live updates using Firebase Firestore
+- 📱 **Responsive Design** - Optimized for mobile, tablet, and desktop
+- 🎭 **Gender Categories** - Separate voting for Gentlemen (紳士) and Ladies (淑女)
+- 📊 **Live Leaderboard** - Real-time rankings with podium display for top 3
+- 🏆 **Podium Rankings** - Dynamic animated podium for winners with glow effects
+- 📱 **QR Code Sharing** - Generate QR codes for easy access
+- 👤 **User Management** - Automatic user ID generation and vote tracking
 
-## Prerequisites
+### Admin Features
+- 🔐 **Admin Panel** - Password-protected admin access
+- ⏰ **Time Controls** - Set voting start/end times
+- 🔄 **Vote Management** - Reset votes or clear all data
+- 📈 **Statistics** - View voting status and timestamps
 
-- Node.js (v16 or higher)
-- npm or yarn
-- Firebase project with Firestore enabled
+### UI/UX Enhancements
+- ✨ **Neon Effects** - Glowing text and borders with flicker animations
+- 🎬 **Film Grain** - Retro cinematic effects
+- 🌈 **Dynamic Backgrounds** - Different images for mobile and desktop
+- 💫 **Smooth Animations** - Floating, fade-in, and shimmer effects
+- 🎯 **Touch Optimized** - 44px minimum touch targets for mobile
 
-## Setup Instructions
+## 🚀 Quick Start
 
-### 1. Install Dependencies
+### Prerequisites
 
-```bash
-npm install
-```
+- **Node.js** (v16 or higher)
+- **npm** or **yarn**
+- **Firebase Project** with Firestore enabled
 
-### 2. Configure Firebase
+### Installation
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project or select an existing one
-3. Enable **Firestore Database** (start in test mode for development)
-4. Go to **Project Settings** > **General** > **Your apps**
-5. Copy your Firebase configuration
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd ait-vote-2026
+   ```
 
-6. Open `src/config.js` and replace the placeholder values:
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-```javascript
-export const firebaseConfig = {
-  apiKey: "YOUR_ACTUAL_API_KEY",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+3. **Configure Firebase**
+   
+   Open `src/firebase.js` and update with your Firebase configuration:
+   
+   ```javascript
+   const firebaseConfig = {
+     apiKey: "YOUR_API_KEY",
+     authDomain: "your-project.firebaseapp.com",
+     projectId: "your-project-id",
+     storageBucket: "your-project.appspot.com",
+     messagingSenderId: "YOUR_SENDER_ID",
+     appId: "YOUR_APP_ID",
+     measurementId: "YOUR_MEASUREMENT_ID"
+   };
+   ```
 
-export const appId = 'your-app-id'; // Optional: customize your app ID
-export const initialAuthToken = null; // Optional: for custom auth
-```
+4. **Set Up Firestore Security Rules**
+   
+   In Firebase Console > Firestore Database > Rules:
+   
+   ```javascript
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       // Allow read/write for development (update for production)
+       match /{document=**} {
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
+   
+   ⚠️ **Important**: For production, implement proper authentication and security rules.
 
-### 3. Set Up Firestore Security Rules
+5. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+   
+   The app will open at `http://localhost:3000`
 
-In Firebase Console > Firestore Database > Rules, add:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Allow read access to all public data
-    match /artifacts/{appId}/public/data/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-  }
-}
-```
-
-**Note:** For production, implement stricter security rules based on your requirements.
-
-### 4. Run the Development Server
-
-```bash
-npm run dev
-```
-
-The app will open at `http://localhost:3000`
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 ait-vote-2026/
 ├── src/
-│   ├── App.jsx           # Main app wrapper
-│   ├── VotingApp.jsx     # Main voting component
-│   ├── main.jsx          # React entry point
-│   ├── index.css         # Global styles + Tailwind
-│   └── config.js         # Firebase configuration
-├── index.html            # HTML template
-├── vite.config.js        # Vite configuration
-├── tailwind.config.js    # Tailwind CSS configuration
-└── package.json          # Dependencies
-
+│   ├── App.jsx                    # Main app wrapper
+│   ├── VotingApp.jsx             # Main voting component (all features)
+│   ├── main.jsx                   # React entry point
+│   ├── index.css                 # Global styles + Tailwind
+│   ├── firebase.js                # Firebase configuration
+│   ├── config.js                  # Legacy config (unused)
+│   └── assets/
+│       ├── Desktop_background.png # Desktop background image
+│       └── Mobile_background.png  # Mobile background image
+├── public/                        # Static assets (served at root)
+│   └── Gemini_Generated_Image_*.png
+├── index.html                     # HTML template
+├── vite.config.js                 # Vite configuration
+├── tailwind.config.js             # Tailwind CSS configuration
+├── postcss.config.js              # PostCSS configuration
+└── package.json                   # Dependencies
 ```
 
-## Available Scripts
+## 🎮 Usage
 
-- `npm run dev` - Start development server
+### For Voters
+
+1. **Select Category** - Choose between "Gentlemen 紳士" or "Ladies 淑女"
+2. **Nominate** - Enter a candidate's name and click "Add"
+3. **Vote** - Click on a candidate card to cast your vote
+4. **View Rankings** - Switch to "Live Rankings" tab to see the leaderboard
+5. **Share** - Click the QR code icon to generate a shareable QR code
+
+### For Administrators
+
+1. **Login** - Click the lock icon and enter admin password (default: `admin2026`)
+2. **Access Admin Panel** - Click the "Admin" tab
+3. **Manage Voting**:
+   - Set start/end times for voting
+   - Enable/disable voting
+   - View current voting status
+4. **Data Management**:
+   - Reset all votes
+   - Clear all data (candidates + votes)
+
+## 🗄️ Firebase Data Structure
+
+The app uses the following Firestore collections:
+
+```
+candidates/
+  └── {candidateId}/
+      ├── name: string
+      ├── gender: "male" | "female"
+      ├── nominator: string (userId)
+      └── created_at: timestamp
+
+votes/
+  └── {voteId}/
+      ├── candidate_id: string
+      ├── user_id: string
+      ├── gender: "male" | "female"
+      └── timestamp: timestamp
+
+settings/
+  └── voting/
+      ├── startTime: timestamp (nullable)
+      ├── endTime: timestamp (nullable)
+      ├── isActive: boolean
+      └── updatedAt: timestamp
+```
+
+## 🎨 Customization
+
+### Background Images
+
+- **Desktop**: `src/assets/Desktop_background.png`
+- **Mobile**: `src/assets/Mobile_background.png`
+- The app automatically switches based on screen width (≤768px = mobile)
+
+### Colors & Styling
+
+Edit the CSS variables in `VotingApp.jsx`:
+
+```javascript
+:root {
+  --neon-pink: #FF1D78;
+  --neon-cyan: #00F0FF;
+  --neon-orange: #FF6B00;
+  --neon-red: #D40000;
+  --bg-dark: #05040a;
+}
+```
+
+### Admin Password
+
+Change the admin password in `VotingApp.jsx`:
+
+```javascript
+const ADMIN_PASSWORD = 'your-new-password';
+```
+
+## 📱 Responsive Breakpoints
+
+- **Mobile**: ≤ 768px (uses mobile background)
+- **Tablet**: 769px - 1024px
+- **Desktop**: > 1024px (uses desktop background)
+
+## 🛠️ Available Scripts
+
+- `npm run dev` - Start development server (port 3000)
 - `npm run build` - Build for production
-- `npm run preview` - Preview production build
+- `npm run preview` - Preview production build locally
 
-## Firebase Data Structure
-
-The app uses the following Firestore structure:
-
-```
-artifacts/
-  └── {appId}/
-      └── public/
-          └── data/
-              ├── candidates/
-              │   └── {candidateId}/
-              │       ├── id: string
-              │       ├── name: string
-              │       ├── gender: "male" | "female"
-              │       ├── createdAt: timestamp
-              │       └── nominator: userId
-              └── votes/
-                  └── {voteId}/
-                      ├── candidateId: string
-                      ├── userId: string
-                      ├── gender: "male" | "female"
-                      └── timestamp: timestamp
-```
-
-## Customization
-
-- **App ID**: Change `appId` in `src/config.js` to use different Firestore collections
-- **Styling**: Modify the `styles` constant in `VotingApp.jsx` for custom colors/effects
-- **Background Image**: Update the background URL in the `.hk-bg` CSS class
-
-## Troubleshooting
+## 🐛 Troubleshooting
 
 ### Firebase Connection Issues
-- Verify your Firebase config in `src/config.js`
-- Check that Firestore is enabled in Firebase Console
-- Ensure security rules allow read/write access
+
+- ✅ Verify Firebase config in `src/firebase.js`
+- ✅ Check that Firestore is enabled in Firebase Console
+- ✅ Ensure security rules allow read/write access
+- ✅ Check browser console for error messages
+
+### Image Not Displaying
+
+- ✅ Verify images exist in `src/assets/` folder
+- ✅ Check browser console for import errors
+- ✅ Clear browser cache and restart dev server
+- ✅ Ensure image file names match exactly (case-sensitive)
 
 ### Styling Issues
-- Make sure Tailwind CSS is properly installed: `npm install -D tailwindcss postcss autoprefixer`
-- Verify `tailwind.config.js` includes the correct content paths
+
+- ✅ Install Tailwind: `npm install -D tailwindcss postcss autoprefixer`
+- ✅ Verify `tailwind.config.js` includes correct content paths
+- ✅ Check that `index.css` imports Tailwind directives
 
 ### Build Errors
-- Clear `node_modules` and reinstall: `rm -rf node_modules && npm install`
-- Check Node.js version: `node --version` (should be v16+)
 
-## License
+- ✅ Clear dependencies: `rm -rf node_modules && npm install`
+- ✅ Check Node.js version: `node --version` (should be v16+)
+- ✅ Verify all imports are correct
+- ✅ Check for TypeScript errors if using TypeScript
+
+### Voting Not Working
+
+- ✅ Check Firebase connection
+- ✅ Verify Firestore security rules
+- ✅ Check browser console for errors
+- ✅ Ensure user ID is generated (check localStorage)
+
+## 🔒 Security Notes
+
+⚠️ **Important for Production**:
+
+1. **Firebase Security Rules**: Implement proper authentication-based rules
+2. **Admin Password**: Change default password and consider implementing proper auth
+3. **API Keys**: Never commit sensitive keys to version control
+4. **Rate Limiting**: Consider implementing vote rate limiting
+5. **Input Validation**: Add server-side validation for candidate names
+
+## 📝 License
 
 ISC
 
+## 🙏 Acknowledgments
+
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Backend**: [Firebase](https://firebase.google.com/)
+
+---
+
+**Made with ❤️ for AIT Annual Dinner 2026**
