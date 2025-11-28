@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, Trophy, Plus, QrCode, Star, Sparkles, Music, Camera, Settings, Trash2, Clock, Lock } from 'lucide-react';
 import { db } from './firebase';
+import hkDesktopBackgroundImage from './assets/Desktop_background.png';
+import hkMobileBackgroundImage from './assets/Mobile_background.png';
 import { 
   collection, 
   addDoc, 
@@ -42,20 +44,26 @@ const styles = `
   /* --- Cinematic Background --- */
   .hk-bg {
     position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-blend-mode: overlay;
+  }
+  
+  /* Dark overlay to ensure UI readability */
+  .hk-bg-overlay {
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: -2;
-    background-color: #020205; /* Deep black-blue fallback */
-    background-image: 
-      /* Reduced opacity gradient (0.5 and 0.3) so image shows through */
-      linear-gradient(to bottom, rgba(5,4,15,0.4) 0%, rgba(10,5,30,0.6) 100%),
-      url('https://images.unsplash.com/photo-1543160408-54c7d9539d91?q=80&w=2532&auto=format&fit=crop');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-blend-mode: overlay; /* Helps colors pop */
+    z-index: -1;
+    background: linear-gradient(to bottom, rgba(2, 2, 5, 0.7) 0%, rgba(5, 4, 10, 0.8) 100%);
+    pointer-events: none;
   }
 
   /* --- Film Grain & Scanlines --- */
@@ -307,6 +315,17 @@ const VotingApp = () => {
     endTime: null,
     isActive: true
   });
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  // Detect mobile/desktop screen size
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Auth & Init - Generate local user ID
   useEffect(() => {
@@ -740,11 +759,25 @@ const VotingApp = () => {
   };
 
   const currentUrl = window.location.href;
+  
+  // Select background image based on device type
+  const backgroundImage = isMobile ? hkMobileBackgroundImage : hkDesktopBackgroundImage;
+
+  // Debug: Log the image path
+  useEffect(() => {
+    console.log('Background image path:', backgroundImage, 'isMobile:', isMobile);
+  }, [isMobile, backgroundImage]);
 
   return (
     <>
       <style>{styles}</style>
-      <div className="hk-bg" />
+      <div 
+        className="hk-bg" 
+        style={{
+          backgroundImage: `url(${backgroundImage})`
+        }}
+      />
+      <div className="hk-bg-overlay" />
       <div className="film-grain" />
       <div className="scanlines" />
 
