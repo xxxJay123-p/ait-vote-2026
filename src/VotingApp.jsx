@@ -460,6 +460,7 @@ const VotingApp = () => {
 
   // Check if current user has voted for specific gender (real-time)
   const [hasVoted, setHasVoted] = useState({});
+  const [previousVote, setPreviousVote] = useState({}); // Track previous vote candidate ID
   
   useEffect(() => {
     if (!user) return;
@@ -474,7 +475,16 @@ const VotingApp = () => {
     const unsubscribe = onSnapshot(
       voteQuery,
       (snapshot) => {
-        setHasVoted(prev => ({ ...prev, [gender]: !snapshot.empty }));
+        const hasVotedForGender = !snapshot.empty;
+        setHasVoted(prev => ({ ...prev, [gender]: hasVotedForGender }));
+        
+        // Track the previous vote candidate ID
+        if (hasVotedForGender && snapshot.docs.length > 0) {
+          const previousVoteData = snapshot.docs[0].data();
+          setPreviousVote(prev => ({ ...prev, [gender]: previousVoteData.candidate_id }));
+        } else {
+          setPreviousVote(prev => ({ ...prev, [gender]: null }));
+        }
       },
       (error) => {
         console.error("Error checking vote:", error);
@@ -698,17 +708,11 @@ const VotingApp = () => {
       setTimeout(() => setErrorMessage(null), 3000);
       return;
     }
-    
-    // First check: UI state check
-    if (hasUserVoted(gender)) {
-      setErrorMessage(`您已經為 ${gender === 'male' ? 'Gentlemen' : 'Ladies'} 組別投票了！每個用戶只能為每個性別組別投票一次。`);
-      setTimeout(() => setErrorMessage(null), 5000);
-      return;
-    }
 
     try {
-      // Second check: Database check (more reliable)
       const votesRef = collection(db, 'votes');
+      
+      // Check if user has already voted for this gender
       const checkQuery = query(
         votesRef,
         where('user_id', '==', user.uid),
@@ -716,32 +720,56 @@ const VotingApp = () => {
       );
       const checkSnapshot = await getDocs(checkQuery);
       
-      if (!checkSnapshot.empty) {
-        setErrorMessage(`您已經為 ${gender === 'male' ? 'Gentlemen' : 'Ladies'} 組別投票了！每個用戶只能為每個性別組別投票一次。`);
-        setTimeout(() => setErrorMessage(null), 5000);
-        // Update local state to reflect database state
-        setHasVoted(prev => ({ ...prev, [gender]: true }));
-        return;
-      }
-      
       // Find candidate name for success message
       const candidate = candidates.find(c => c.id === candidateId);
       const candidateName = candidate ? candidate.name : '候選人';
       
-      // Add the vote
-      const voteRef = await addDoc(votesRef, {
-        candidate_id: candidateId,
-        user_id: user.uid,
-        gender: gender,
-        timestamp: serverTimestamp()
-      });
+      // If user has already voted, delete the previous vote first
+      if (!checkSnapshot.empty) {
+        const previousVoteDoc = checkSnapshot.docs[0];
+        const previousCandidateId = previousVoteDoc.data().candidate_id;
+        
+        // If voting for the same candidate, no need to change
+        if (previousCandidateId === candidateId) {
+          setSuccessMessage(`您已經為 ${candidateName} 投票了！`);
+          setTimeout(() => setSuccessMessage(null), 3000);
+          return;
+        }
+        
+        // Delete the previous vote
+        await deleteDoc(previousVoteDoc.ref);
+        console.log("✅ Previous vote deleted");
+        
+        // Find previous candidate name for message
+        const previousCandidate = candidates.find(c => c.id === previousCandidateId);
+        const previousCandidateName = previousCandidate ? previousCandidate.name : '候選人';
+        
+        // Add the new vote
+        const voteRef = await addDoc(votesRef, {
+          candidate_id: candidateId,
+          user_id: user.uid,
+          gender: gender,
+          timestamp: serverTimestamp()
+        });
+        
+        console.log("✅ Vote changed successfully in Firestore with ID:", voteRef.id);
+        setSuccessMessage(`投票已更改！從 ${previousCandidateName} 改為 ${candidateName}。`);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        // User hasn't voted yet, just add the vote
+        const voteRef = await addDoc(votesRef, {
+          candidate_id: candidateId,
+          user_id: user.uid,
+          gender: gender,
+          timestamp: serverTimestamp()
+        });
+        
+        console.log("✅ Vote recorded successfully in Firestore with ID:", voteRef.id);
+        setSuccessMessage(`投票成功！您已為 ${candidateName} 投票。`);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
       
-      console.log("✅ Vote recorded successfully in Firestore with ID:", voteRef.id);
-      // Update local state immediately
-      setHasVoted(prev => ({ ...prev, [gender]: true }));
-      setSuccessMessage(`投票成功！您已為 ${candidateName} 投票。`);
-      setTimeout(() => setSuccessMessage(null), 3000);
-      // Real-time listener will automatically update vote counts
+      // Real-time listener will automatically update vote counts and hasVoted state
     } catch (err) {
       console.error("❌ Error voting:", err);
       console.error("Error code:", err.code);
@@ -1037,12 +1065,22 @@ const VotingApp = () => {
                   Cast Your Vote
                 </h3>
 
-                {hasUserVoted(gender) && (
-                  <div className="mb-4 sm:mb-6 bg-green-500/20 border border-green-500/50 p-3 sm:p-4 rounded text-green-300 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(34,197,94,0.2)] text-sm sm:text-base">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0"></div>
-                    <span>Vote Confirmed • 投票已確認</span>
-                  </div>
-                )}
+                {hasUserVoted(gender) && (() => {
+                  const previousCandidateId = previousVote[gender];
+                  const previousCandidate = previousCandidateId ? candidates.find(c => c.id === previousCandidateId) : null;
+                  const previousCandidateName = previousCandidate ? previousCandidate.name : null;
+                  
+                  return (
+                    <div className="mb-4 sm:mb-6 bg-cyan-500/20 border border-cyan-500/50 p-3 sm:p-4 rounded text-cyan-300 flex items-center justify-center gap-2 sm:gap-3 shadow-[0_0_15px_rgba(6,182,212,0.2)] text-sm sm:text-base">
+                      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse flex-shrink-0"></div>
+                      <span>
+                        {previousCandidateName 
+                          ? `Current Vote: ${previousCandidateName} • 目前投票: ${previousCandidateName} • You can change your vote`
+                          : 'Vote Confirmed • 投票已確認 • You can change your vote'}
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {loading ? (
@@ -1053,43 +1091,49 @@ const VotingApp = () => {
                       <span className="text-sm sm:text-base">No candidates yet. Be the first to nominate!</span>
                     </div>
                   ) : (
-                    getFilteredCandidates().map((candidate) => (
-                      <button
-                        key={candidate.id}
-                        onClick={() => vote(candidate.id)}
-                        disabled={hasUserVoted(gender)}
-                        className={`group relative p-4 sm:p-5 rounded-lg border transition-all duration-300 text-left overflow-hidden active:scale-[0.98] ${
-                          hasUserVoted(gender)
-                            ? 'bg-black/40 border-gray-800 opacity-50 cursor-default'
-                            : 'bg-black/40 border-gray-700 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(0,240,255,0.2)] active:bg-black/50'
-                        }`}
-                      >
-                         {/* Hover gradient background */}
-                         {!hasUserVoted(gender) && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/0 via-cyan-900/10 to-cyan-900/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
-                         )}
+                    getFilteredCandidates().map((candidate) => {
+                      const isCurrentVote = hasUserVoted(gender) && previousVote[gender] === candidate.id;
+                      
+                      return (
+                        <button
+                          key={candidate.id}
+                          onClick={() => vote(candidate.id)}
+                          className={`group relative p-4 sm:p-5 rounded-lg border transition-all duration-300 text-left overflow-hidden active:scale-[0.98] ${
+                            isCurrentVote
+                              ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_20px_rgba(0,240,255,0.4)]'
+                              : 'bg-black/40 border-gray-700 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(0,240,255,0.2)] active:bg-black/50'
+                          }`}
+                        >
+                           {/* Hover gradient background */}
+                           <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/0 via-cyan-900/10 to-cyan-900/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
 
-                         <div className="flex justify-between items-center relative z-10 gap-2">
-                           <span className={`font-bold text-lg sm:text-xl tracking-wide group-hover:text-cyan-300 transition-colors break-words flex-1 ${hasUserVoted(gender) ? 'text-gray-500' : 'text-gray-200'}`}>
-                             {candidate.name}
-                           </span>
-                           <span className="text-[10px] sm:text-xs text-gray-600 font-mono tracking-widest uppercase flex-shrink-0">ID:{candidate.id.slice(-4)}</span>
-                         </div>
-                         
-                         {/* Vote Count Badge */}
-                         <div className="mt-2 sm:mt-3 flex items-center justify-between gap-2">
-                            <div className="h-1 flex-1 bg-gray-800 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-cyan-500 shadow-[0_0_10px_#00F0FF]"
-                                  style={{ 
-                                    width: `${Math.min(((votes[candidate.id] || 0) / (Object.values(votes).reduce((a,b)=>a+b,0)||1)) * 100, 100)}%` 
-                                  }} 
-                                />
-                            </div>
-                            <span className="text-cyan-500 font-mono text-xs sm:text-sm flex-shrink-0 ml-2">{votes[candidate.id] || 0} PTS</span>
-                         </div>
-                      </button>
-                    ))
+                           <div className="flex justify-between items-center relative z-10 gap-2">
+                             <span className={`font-bold text-lg sm:text-xl tracking-wide group-hover:text-cyan-300 transition-colors break-words flex-1 ${
+                               isCurrentVote ? 'text-cyan-300' : 'text-gray-200'
+                             }`}>
+                               {candidate.name}
+                               {isCurrentVote && (
+                                 <span className="ml-2 text-xs text-cyan-400">(Your Vote)</span>
+                               )}
+                             </span>
+                             <span className="text-[10px] sm:text-xs text-gray-600 font-mono tracking-widest uppercase flex-shrink-0">ID:{candidate.id.slice(-4)}</span>
+                           </div>
+                           
+                           {/* Vote Count Badge */}
+                           <div className="mt-2 sm:mt-3 flex items-center justify-between gap-2">
+                              <div className="h-1 flex-1 bg-gray-800 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-cyan-500 shadow-[0_0_10px_#00F0FF]"
+                                    style={{ 
+                                      width: `${Math.min(((votes[candidate.id] || 0) / (Object.values(votes).reduce((a,b)=>a+b,0)||1)) * 100, 100)}%` 
+                                    }} 
+                                  />
+                              </div>
+                              <span className="text-cyan-500 font-mono text-xs sm:text-sm flex-shrink-0 ml-2">{votes[candidate.id] || 0} PTS</span>
+                           </div>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               </div>
